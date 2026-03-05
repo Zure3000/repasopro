@@ -455,8 +455,8 @@ const CENTROS={
     'Penyagolosa','Salesianos','Villa Fátima'
   ],
   instituto:[
-    'IES Jaume I','IES Llombai','Illes Columbretes',
-    'Salesianos','Villa Fátima'
+    'IES Jaume I','IES Llombai','Consolación',
+    'Illes Columbretes','Salesianos','Villa Fátima'
   ]
 };
 
@@ -1122,7 +1122,7 @@ function renderTipoOptions(){
     const div=document.createElement('div');
     div.className='option-btn'+(examData.tipoCentro===t.id?' selected':'');
     div.innerHTML='<div class="opt-icon">'+t.icon+'</div><div class="opt-label">'+t.label+'</div><div class="opt-sub">'+t.sub+'</div>';
-    div.onclick=()=>{examData.tipoCentro=t.id;examData.centro='';examData.curso='';renderTipoOptions();};
+    div.onclick=()=>{examData.tipoCentro=t.id;examData.centro='';examData.curso='';renderTipoOptions();setTimeout(()=>stepNext(),200);};
     container.appendChild(div);
   });
 }
@@ -1148,7 +1148,7 @@ function renderCentroOptions(){
     const div=document.createElement('div');
     div.className='option-item'+(examData.centro===c?' selected':'');
     div.innerHTML='<div class="option-item-label">'+c+'</div><span class="check-icon">✓</span>';
-    div.onclick=()=>{examData.centro=c;examData.curso='';renderCentroOptions();};
+    div.onclick=()=>{examData.centro=c;examData.curso='';renderCentroOptions();setTimeout(()=>stepNext(),200);};
     container.appendChild(div);
   });
 }
@@ -1161,7 +1161,7 @@ function renderCursoOptions(){
     const div=document.createElement('div');
     div.className='option-item'+(examData.curso===c.id?' selected':'');
     div.innerHTML='<div><div class="option-item-label">'+c.label+'</div><div class="option-item-sub">'+c.grupo+'</div></div><span class="check-icon">✓</span>';
-    div.onclick=()=>{examData.curso=c.id;renderCursoOptions();};
+    div.onclick=()=>{examData.curso=c.id;renderCursoOptions();setTimeout(()=>stepNext(),200);};
     container.appendChild(div);
   });
 }
@@ -1174,7 +1174,7 @@ function renderAsigOptions(){
     const div=document.createElement('div');
     div.className='option-item'+(examData.asignatura===a?' selected':'');
     div.innerHTML='<div class="option-item-label">'+a+'</div><span class="check-icon">✓</span>';
-    div.onclick=()=>{examData.asignatura=a;renderAsigOptions();};
+    div.onclick=()=>{examData.asignatura=a;renderAsigOptions();setTimeout(()=>stepNext(),200);};
     container.appendChild(div);
   });
 }
