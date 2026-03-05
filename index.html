@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepasoPro</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, remove, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  const firebaseConfig = {
+    apiKey:"AIzaSyAL7sLA4Gaio79LfSTLBjofCZW-Rk4CVbU",
+    authDomain:"repasopro-97e9b.firebaseapp.com",
+    databaseURL:"https://repasopro-97e9b-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:"repasopro-97e9b",
+    storageBucket:"repasopro-97e9b.firebasestorage.app",
+    messagingSenderId:"396277200171",
+    appId:"1:396277200171:web:29f7dbe830bff17b3e016e"
+  };
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  window._fb = { db, ref, push, onValue, remove, set, get };
+  document.dispatchEvent(new Event('fb-ready'));
+</script>
+<style>
+:root{--bg:#0f0e17;--surface:#1a1829;--surface2:#221f35;--accent:#e8c547;--accent2:#ff6b6b;--accent3:#6bffb8;--text:#fffffe;--text-muted:#a7a3c2;--border:rgba(255,255,255,0.07);--shadow:0 8px 32px rgba(0,0,0,0.4)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.bg-orbs::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(232,197,71,.12) 0%,transparent 70%);top:-100px;right:-100px;border-radius:50%;animation:drift 12s ease-in-out infinite alternate}
+.bg-orbs::after{content:'';position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(107,255,184,.08) 0%,transparent 70%);bottom:-100px;left:-100px;border-radius:50%;animation:drift 15s ease-in-out infinite alternate-reverse}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(30px,20px) scale(1.05)}}
+#login-screen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px;transition:opacity .5s,transform .5s}
+#login-screen.hidden{opacity:0;transform:scale(.95);pointer-events:none}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:40px 36px;width:100%;max-width:420px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent3),var(--accent2))}
+.login-logo{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;margin-bottom:6px}
+.login-logo span{color:var(--accent)}
+.login-subtitle{color:var(--text-muted);font-size:.9rem;margin-bottom:32px}
+.field-group{margin-bottom:18px}
+.field-group label{display:block;font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px}
+.field-group input,.field-group select,.field-group textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:13px 15px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
+.field-group input:focus,.field-group select:focus,.field-group textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,197,71,.15)}
+.field-group select option{background:var(--surface2)}
+.field-group textarea{resize:vertical;min-height:80px}
+.btn-primary{width:100%;background:var(--accent);color:#0f0e17;border:none;border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;margin-bottom:10px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(232,197,71,.35)}
+.btn-secondary{width:100%;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;margin-bottom:8px}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.login-switch{text-align:center;margin-top:14px;font-size:.9rem;color:var(--text-muted)}
+.login-switch a{color:var(--accent);cursor:pointer;font-weight:600}
+.error-msg{background:rgba(255,107,107,.15);border:1px solid rgba(255,107,107,.3);border-radius:10px;padding:11px 15px;font-size:.85rem;color:var(--accent2);margin-bottom:14px;display:none}
+.error-msg.show{display:block}
+.group-code-box{background:var(--surface2);border:2px dashed var(--accent);border-radius:16px;padding:20px;text-align:center;margin-bottom:20px}
+.group-code-label{font-size:.78rem;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.group-code-value{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:900;color:var(--accent);letter-spacing:.2em}
+.group-code-hint{font-size:.8rem;color:var(--text-muted);margin-top:8px}
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--text-muted);font-size:.85rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+#app{display:none;position:relative;z-index:1;min-height:100vh}
+#app.visible{display:block}
+.header{position:sticky;top:0;z-index:50;background:rgba(15,14,23,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 20px}
+.header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:62px}
+.logo{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:900}
+.logo span{color:var(--accent)}
+.group-chip{background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:4px 12px;font-size:.73rem;color:var(--text-muted);font-weight:600}
+.group-chip span{color:var(--accent)}
+.header-right{display:flex;align-items:center;gap:8px}
+.user-badge{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:5px 13px 5px 5px;font-size:.85rem;cursor:pointer}
+.user-badge:hover{border-color:var(--accent)}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#0f0e17}
+.role-tag{font-size:.68rem;padding:2px 8px;border-radius:100px;font-weight:600}
+.role-tag.profesor{background:rgba(232,197,71,.2);color:var(--accent)}
+.role-tag.alumno{background:rgba(107,255,184,.2);color:var(--accent3)}
+.btn-icon{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 12px;color:var(--text-muted);cursor:pointer;font-size:.85rem;font-family:'DM Sans',sans-serif;transition:color .2s}
+.btn-icon:hover{color:var(--text)}
+.notif-btn{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:7px 11px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center}
+.notif-btn:hover{border-color:var(--accent)}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:var(--accent2);color:white;border-radius:50%;width:17px;height:17px;font-size:.62rem;font-weight:700;display:none;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.notif-badge.show{display:flex;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+.notif-panel{position:fixed;top:70px;right:16px;width:320px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);z-index:200;display:none;overflow:hidden}
+.notif-panel.show{display:block;animation:slidein .2s ease}
+@keyframes slidein{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.notif-header{padding:14px 18px;border-bottom:1px solid var(--border);font-weight:600;font-size:.88rem}
+.notif-list{max-height:300px;overflow-y:auto}
+.notif-item{padding:12px 18px;border-bottom:1px solid var(--border);font-size:.83rem;display:flex;gap:10px;align-items:flex-start}
+.notif-item.unread{background:rgba(232,197,71,.05)}
+.notif-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
+.notif-item-title{font-weight:600;margin-bottom:2px}
+.notif-item-sub{color:var(--text-muted);font-size:.78rem}
+.notif-empty{padding:28px;text-align:center;color:var(--text-muted);font-size:.88rem}
+.clear-notifs{padding:10px 18px;text-align:center;font-size:.78rem;color:var(--accent);cursor:pointer;font-weight:600}
+.main{max-width:960px;margin:0 auto;padding:28px 20px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center;position:relative;overflow:hidden}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.stat-card:nth-child(1)::after{background:var(--accent)}
+.stat-card:nth-child(2)::after{background:var(--accent3)}
+.stat-card:nth-child(3)::after{background:var(--accent2)}
+.stat-num{font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;line-height:1;margin-bottom:4px}
+.stat-num.yellow{color:var(--accent)}.stat-num.green{color:var(--accent3)}.stat-num.red{color:var(--accent2)}
+.stat-label{font-size:.78rem;color:var(--text-muted);font-weight:500}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.section-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700}
+.btn-add{background:var(--accent);color:#0f0e17;border:none;border-radius:10px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform .15s,box-shadow .15s}
+.btn-add:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(232,197,71,.35)}
+.filter-bar{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:20px}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.filter-row:last-child{margin-bottom:0}
+.filter-label{font-size:.75rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.filter-chip{background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:6px 14px;font-size:.82rem;font-family:'DM Sans',sans-serif;color:var(--text-muted);cursor:pointer;transition:all .2s;white-space:nowrap}
+.filter-chip.active{background:var(--accent);color:#0f0e17;border-color:var(--accent);font-weight:600}
+.filter-chip:hover:not(.active){border-color:rgba(232,197,71,.4);color:var(--text)}
+.filter-toggle{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:.83rem;font-family:'DM Sans',sans-serif;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
+.filter-toggle:hover,.filter-toggle.active{border-color:var(--accent);color:var(--accent)}
+.filter-section{display:none}
+.filter-section.open{display:block}
+.exams-grid{display:flex;flex-direction:column;gap:14px}
+.exam-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:22px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s;animation:cardin .35s ease both}
+@keyframes cardin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.exam-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.14);box-shadow:0 10px 36px rgba(0,0,0,.3)}
+.exam-card.new-card{border-color:var(--accent);box-shadow:0 0 0 1px rgba(232,197,71,.25)}
+.exam-stripe{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:20px 0 0 20px}
+.exam-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.exam-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;flex:1}
+.exam-badge{padding:4px 11px;border-radius:100px;font-size:.73rem;font-weight:700;white-space:nowrap}
+.exam-desc{font-size:.88rem;color:var(--text-muted);line-height:1.6;margin-bottom:14px}
+.exam-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.meta-item{font-size:.8rem;color:var(--text-muted)}
+.meta-tag{background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:3px 10px;font-size:.73rem;color:var(--text-muted)}
+.new-badge{background:var(--accent2);color:white;font-size:.63rem;font-weight:800;padding:2px 7px;border-radius:100px;text-transform:uppercase;animation:pulse 2s infinite}
+.exam-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.btn-sm{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 13px;font-size:.78rem;font-family:'DM Sans',sans-serif;color:var(--text-muted);cursor:pointer;transition:all .2s}
+.btn-sm.danger:hover{color:var(--accent2);border-color:var(--accent2)}
+.no-exams{text-align:center;padding:56px 20px;color:var(--text-muted)}
+.no-exams .icon{font-size:2.8rem;margin-bottom:14px}
+.no-exams h3{font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:8px;color:var(--text)}
+.spinner{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:32px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;position:relative;animation:modalin .22s ease}
+@keyframes modalin{from{opacity:0;transform:scale(.96) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;margin-bottom:6px}
+.modal-subtitle{font-size:.85rem;color:var(--text-muted);margin-bottom:24px}
+.modal-close{position:absolute;top:18px;right:18px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;color:var(--text-muted);font-size:.95rem}
+.step-indicator{display:flex;align-items:center;gap:6px;margin-bottom:24px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s}
+.step-dot.active{background:var(--accent);transform:scale(1.3)}
+.step-dot.done{background:var(--accent3)}
+.step-title{font-size:.8rem;color:var(--text-muted);margin-left:8px}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.option-btn{background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.option-btn:hover{border-color:rgba(232,197,71,.4)}
+.option-btn.selected{border-color:var(--accent);background:rgba(232,197,71,.1)}
+.option-btn .opt-icon{font-size:1.6rem;margin-bottom:6px}
+.option-btn .opt-label{font-size:.85rem;font-weight:600;color:var(--text)}
+.option-btn .opt-sub{font-size:.73rem;color:var(--text-muted);margin-top:2px}
+.options-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:280px;overflow-y:auto}
+.option-item{background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:13px 16px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:space-between}
+.option-item:hover{border-color:rgba(232,197,71,.4)}
+.option-item.selected{border-color:var(--accent);background:rgba(232,197,71,.08)}
+.option-item-label{font-size:.9rem;font-weight:500}
+.option-item-sub{font-size:.75rem;color:var(--text-muted)}
+.check-icon{color:var(--accent);font-size:1rem;display:none}
+.option-item.selected .check-icon{display:block}
+.step-nav{display:flex;gap:10px;margin-top:20px}
+.btn-back{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 18px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text-muted);cursor:pointer;flex:1}
+.btn-next{background:var(--accent);color:#0f0e17;border:none;border-radius:10px;padding:11px 18px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;flex:2}
+.btn-next:disabled{opacity:.4;cursor:not-allowed}
+.summary-box{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.summary-row:last-child{border-bottom:none}
+.summary-key{color:var(--text-muted);font-size:.8rem}
+.summary-val{font-weight:600}
+.toast-container{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:400;display:flex;flex-direction:column;align-items:center;gap:8px}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:11px 18px;font-size:.88rem;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);animation:toastin .3s ease,toastout .3s ease 2.7s forwards;white-space:nowrap}
+@keyframes toastin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastout{from{opacity:1}to{opacity:0;transform:translateY(8px)}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+@media(max-width:500px){.stats-row{gap:8px}.stat-card{padding:12px 8px}.stat-num{font-size:1.5rem}.login-card,.modal{padding:24px 18px}.notif-panel{width:calc(100vw - 24px);right:12px}.options-grid{grid-template-columns:1fr}.group-chip{display:none}}
+</style>
+</head>
+<body>
+<div class="bg-orbs"></div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+<div class="login-card">
+  <div class="login-logo">Repaso<span>Pro</span></div>
+  <div class="login-subtitle">Gestión de exámenes para grupos de estudio</div>
+
+  <div id="login-form">
+    <div class="error-msg" id="login-error">Usuario o contraseña incorrectos</div>
+    <div class="field-group"><label>Usuario</label><input type="text" id="login-user" placeholder="tu_usuario" autocomplete="username"></div>
+    <div class="field-group"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+    <button class="btn-primary" onclick="doLogin()">Entrar →</button>
+    <div class="login-switch">¿No tienes cuenta? <a onclick="showRegister()">Regístrate</a></div>
+  </div>
+
+  <div id="register-form" style="display:none">
+    <div class="error-msg" id="reg-error"></div>
+    <div class="field-group"><label>Nombre completo</label><input type="text" id="reg-name" placeholder="Tu nombre"></div>
+    <div class="field-group"><label>Usuario</label><input type="text" id="reg-user" placeholder="elige_un_usuario"></div>
+    <div class="field-group"><label>Contraseña</label><input type="password" id="reg-pass" placeholder="mínimo 4 caracteres"></div>
+    <div class="field-group"><label>Rol</label>
+      <select id="reg-role">
+        <option value="alumno">👨‍🎓 Alumno / Padre o madre</option>
+        <option value="profesor">👩‍🏫 Profesor / Academia</option>
+      </select>
+    </div>
+    <div id="curso-field" class="field-group" style="display:none">
+      <label>Curso</label>
+      <select id="reg-curso"><option value="">— Selecciona curso —</option></select>
+    </div>
+    <div class="divider">Elige una opción</div>
+    <button class="btn-primary" onclick="showCreateGroup()">➕ Crear grupo nuevo</button>
+    <button class="btn-secondary" onclick="showJoinGroup()">🔗 Unirme a un grupo existente</button>
+    <div class="login-switch">¿Ya tienes cuenta? <a onclick="showLogin()">Inicia sesión</a></div>
+  </div>
+
+  <div id="create-group-form" style="display:none">
+    <div class="error-msg" id="create-group-error"></div>
+    <div class="field-group"><label>Nombre de tu academia / grupo</label><input type="text" id="group-name-input" placeholder="Ej: Academia Gauss"></div>
+    <button class="btn-primary" onclick="doCreateGroup()">Crear grupo y registrarme →</button>
+    <div class="login-switch"><a onclick="showRegister()">← Volver</a></div>
+  </div>
+
+  <div id="join-group-form" style="display:none">
+    <div class="error-msg" id="join-group-error"></div>
+    <div class="field-group"><label>Código del grupo</label><input type="text" id="join-group-code" placeholder="Ej: ABC123" style="text-transform:uppercase;letter-spacing:.1em;font-size:1.1rem;text-align:center"></div>
+    <button class="btn-primary" onclick="doJoinGroup()">Unirme y registrarme →</button>
+    <div class="login-switch"><a onclick="showRegister()">← Volver</a></div>
+  </div>
+
+  <div id="group-created-form" style="display:none">
+    <div class="group-code-box">
+      <div class="group-code-label">Código de tu grupo</div>
+      <div class="group-code-value" id="new-group-code-display"></div>
+      <div class="group-code-hint">Comparte este código con tus alumnos y compañeros</div>
+    </div>
+    <button class="btn-primary" onclick="doFinalRegister()">Entrar a RepasoPro →</button>
+  </div>
+</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="header">
+    <div class="header-inner">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="logo">Repaso<span>Pro</span></div>
+        <div class="group-chip">📍 <span id="group-name-display"></span></div>
+      </div>
+      <div class="header-right">
+        <div class="notif-btn" onclick="toggleNotifs()" id="notif-btn">🔔<div class="notif-badge" id="notif-badge"></div></div>
+        <div class="user-badge" onclick="openProfile()">
+          <div class="user-avatar" id="user-avatar"></div>
+          <span id="user-display-name" style="font-weight:500"></span>
+          <span class="role-tag" id="role-tag"></span>
+        </div>
+        <button class="btn-icon" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-header">🔔 Notificaciones</div>
+    <div class="notif-list" id="notif-list"></div>
+    <div class="clear-notifs" onclick="clearMyNotifs()">Marcar todas como leídas</div>
+  </div>
+
+  <main class="main">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num yellow" id="stat-total">—</div><div class="stat-label">Totales</div></div>
+      <div class="stat-card"><div class="stat-num green" id="stat-upcoming">—</div><div class="stat-label">Próximos</div></div>
+      <div class="stat-card"><div class="stat-num red" id="stat-week">—</div><div class="stat-label">Esta semana</div></div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Tablón de exámenes</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="filter-toggle" id="filter-toggle-btn" onclick="toggleFilters()">🔍 Filtros</button>
+        <button class="btn-add" id="add-btn" onclick="openModal()" style="display:none">＋ Nuevo examen</button>
+      </div>
+    </div>
+
+    <div class="filter-bar filter-section" id="filter-section">
+      <div class="filter-row">
+        <span class="filter-label">Estado:</span>
+        <div class="filter-chip active" onclick="setFilter('todos',this,'estado')">Todos</div>
+        <div class="filter-chip" onclick="setFilter('semana',this,'estado')">Esta semana</div>
+        <div class="filter-chip" onclick="setFilter('proximos',this,'estado')">Próximos</div>
+        <div class="filter-chip" onclick="setFilter('pasados',this,'estado')">Pasados</div>
+      </div>
+      <div class="filter-row" id="tipo-filter-row" style="display:none">
+        <span class="filter-label">Tipo:</span>
+        <div id="tipo-filter-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div class="filter-row" id="centro-filter-row" style="display:none">
+        <span class="filter-label">Centro:</span>
+        <div id="centro-filter-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div class="filter-row" id="curso-filter-row" style="display:none">
+        <span class="filter-label">Curso:</span>
+        <div id="curso-filter-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div class="filter-row" id="asig-filter-row" style="display:none">
+        <span class="filter-label">Asignatura:</span>
+        <div id="asig-filter-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div class="exams-grid" id="exams-grid"><div class="spinner"></div></div>
+  </main>
+</div>
+
+<!-- MODAL NUEVO EXAMEN (paso a paso) -->
+<div class="modal-overlay" id="modal">
+<div class="modal">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <div class="modal-title">Nuevo examen</div>
+  <div class="modal-subtitle" id="modal-step-subtitle">Paso 1 de 5</div>
+  <div class="step-indicator" id="step-indicator"></div>
+
+  <!-- PASO 1: Tipo de centro -->
+  <div id="step-1">
+    <div style="font-weight:600;margin-bottom:14px">¿Es un colegio o un instituto?</div>
+    <div class="options-grid" id="tipo-options"></div>
+  </div>
+
+  <!-- PASO 2: Centro -->
+  <div id="step-2" style="display:none">
+    <div style="font-weight:600;margin-bottom:14px">¿Qué centro?</div>
+    <div class="options-list" id="centro-options"></div>
+    <div style="margin-top:10px">
+      <input type="text" id="nuevo-centro-input" placeholder="Otro centro..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none">
+    </div>
+  </div>
+
+  <!-- PASO 3: Curso -->
+  <div id="step-3" style="display:none">
+    <div style="font-weight:600;margin-bottom:14px">¿Para qué curso?</div>
+    <div class="options-list" id="curso-options"></div>
+    <div style="margin-top:10px">
+      <input type="text" id="nuevo-curso-input" placeholder="Añadir curso personalizado..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none">
+    </div>
+  </div>
+
+  <!-- PASO 4: Asignatura -->
+  <div id="step-4" style="display:none">
+    <div style="font-weight:600;margin-bottom:14px">¿Qué asignatura?</div>
+    <div class="options-list" id="asig-options"></div>
+    <div style="margin-top:10px">
+      <input type="text" id="nueva-asig-input" placeholder="Añadir asignatura..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none">
+    </div>
+  </div>
+
+  <!-- PASO 5: Título -->
+  <div id="step-5" style="display:none">
+    <div style="font-weight:600;margin-bottom:14px">¿Cómo se llama el examen?</div>
+    <div class="field-group"><input type="text" id="ex-title" placeholder="Ej: Parcial Tema 3, Examen final..."></div>
+    <div class="field-group"><label>Fecha del examen</label><input type="date" id="ex-fecha"></div>
+  </div>
+
+  <!-- PASO 6: Descripción -->
+  <div id="step-6" style="display:none">
+    <div style="font-weight:600;margin-bottom:14px">Información extra <span style="font-weight:400;color:var(--text-muted)">(opcional)</span></div>
+    <div class="field-group"><textarea id="ex-desc" placeholder="Temas que entran, tipo de preguntas, apuntes importantes..."></textarea></div>
+  </div>
+
+  <!-- PASO 7: Resumen -->
+  <div id="step-7" style="display:none">
+    <div style="font-weight:600;margin-bottom:14px">✅ Resumen del examen</div>
+    <div class="summary-box" id="exam-summary"></div>
+  </div>
+
+  <div class="step-nav">
+    <button class="btn-back" id="btn-back" onclick="stepBack()" style="display:none">← Atrás</button>
+    <button class="btn-next" id="btn-next" onclick="stepNext()">Siguiente →</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL PERFIL -->
+<div class="modal-overlay" id="profile-modal">
+<div class="modal">
+  <button class="modal-close" onclick="closeProfile()">✕</button>
+  <div class="modal-title">Mi perfil</div>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px">
+    <div id="profile-avatar-big" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent3));display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:800;color:#0f0e17;flex-shrink:0"></div>
+    <div>
+      <div id="profile-name-display" style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700"></div>
+      <div id="profile-user-display" style="font-size:.83rem;color:var(--text-muted)"></div>
+      <div id="profile-role-display" style="font-size:.73rem;margin-top:3px"></div>
+      <div id="profile-group-display" style="font-size:.73rem;margin-top:2px;color:var(--accent)"></div>
+    </div>
+  </div>
+  <div class="error-msg" id="profile-error"></div>
+  <div class="field-group"><label>Nombre completo</label><input type="text" id="profile-name"></div>
+  <div id="profile-curso-field" class="field-group" style="display:none"><label>Mi curso</label><select id="profile-curso"></select></div>
+  <div class="field-group"><label>Nueva contraseña <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.73rem">(vacío = no cambiar)</span></label><input type="password" id="profile-pass" placeholder="Nueva contraseña"></div>
+  <div class="field-group"><label>Confirmar contraseña</label><input type="password" id="profile-pass2"></div>
+  <button class="btn-primary" onclick="saveProfile()">Guardar cambios ✓</button>
+</div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- MODAL EDITAR EXAMEN -->
+<div class="modal-overlay" id="edit-modal">
+<div class="modal">
+  <button class="modal-close" onclick="closeEditModal()">✕</button>
+  <div class="modal-title">Editar examen</div>
+  <input type="hidden" id="edit-exam-id">
+  <div class="field-group"><label>Título</label><input type="text" id="edit-title"></div>
+  <div class="field-group"><label>Tipo de centro</label>
+    <select id="edit-tipo-centro" onchange="updateEditCentros()">
+      <option value="colegio">🏫 Colegio</option>
+      <option value="instituto">🎓 Instituto</option>
+    </select>
+  </div>
+  <div class="field-group"><label>Centro</label>
+    <select id="edit-centro"></select>
+  </div>
+  <div class="field-group"><label>Curso</label>
+    <select id="edit-curso"></select>
+  </div>
+  <div class="field-group"><label>Asignatura</label>
+    <select id="edit-asignatura"></select>
+  </div>
+  <div class="field-group"><label>Fecha</label><input type="date" id="edit-fecha"></div>
+  <div class="field-group"><label>Descripción</label><textarea id="edit-desc"></textarea></div>
+  <button class="btn-primary" onclick="saveEditExam()">Guardar cambios ✓</button>
+</div>
+</div>
+
+<script>
+const el=id=>document.getElementById(id);
+const v=id=>el(id).value.trim();
+const h=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+let db,fbRef,fbPush,fbOnValue,fbRemove,fbSet,fbGet;
+let currentUser=null,allExams=[],filtroEstado='todos',filtroTipo='todos',filtroCentro='todos',filtroCurso='todos',filtroAsig='todas';
+let unsubExams=null,unsubNotifs=null;
+let pendingRegisterData=null;
+
+// ── CURSOS ESTÁNDAR ──
+// Centros de Burriana
+const CENTROS={
+  colegio:[
+    'Consolación','Francesc Roca i Alcaide','Illes Columbretes',
+    'Josep Iturbi','Novenes de Calatrava','Pare Vilallonga',
+    'Penyagolosa','Salesianos San Juan Bautista','Villa Fátima'
+  ],
+  instituto:[
+    'IES Jaume I','IES Llombai','Consolación (ESO/Bach)',
+    'Illes Columbretes (ESO)','Salesianos (ESO/Bach)','Villa Fátima (ESO)'
+  ]
+};
+
+const CURSOS_POR_TIPO={
+  colegio:[
+    {id:'1pri',label:'1º Primaria',grupo:'Primaria'},
+    {id:'2pri',label:'2º Primaria',grupo:'Primaria'},
+    {id:'3pri',label:'3º Primaria',grupo:'Primaria'},
+    {id:'4pri',label:'4º Primaria',grupo:'Primaria'},
+    {id:'5pri',label:'5º Primaria',grupo:'Primaria'},
+    {id:'6pri',label:'6º Primaria',grupo:'Primaria'},
+  ],
+  instituto:[
+    {id:'1eso',label:'1º ESO',grupo:'ESO'},
+    {id:'2eso',label:'2º ESO',grupo:'ESO'},
+    {id:'3eso',label:'3º ESO',grupo:'ESO'},
+    {id:'4eso',label:'4º ESO',grupo:'ESO'},
+    {id:'1bach',label:'1º Bachillerato',grupo:'Bachillerato'},
+    {id:'2bach',label:'2º Bachillerato',grupo:'Bachillerato'},
+    {id:'fp1',label:'FP Básica',grupo:'FP'},
+    {id:'fp2',label:'FP Grado Medio',grupo:'FP'},
+    {id:'fp3',label:'FP Grado Superior',grupo:'FP'},
+  ]
+};
+
+function getCursoBase(){
+  const tipo=examData.tipoCentro||'colegio';
+  return[...(CURSOS_POR_TIPO[tipo]||[]),...cursosExtra];
+}
+
+const CURSOS_BASE=[
+  ...CURSOS_POR_TIPO.colegio,...CURSOS_POR_TIPO.instituto
+];
+
+const ASIGS_BASE=['Matemáticas','Lengua','Inglés','Francés','Ciencias Naturales','Ciencias Sociales','Física','Química','Biología','Historia','Geografía','Filosofía','Economía','Tecnología','Informática','Educación Física','Música','Plástica','Religión','Latín','Griego'];
+
+let cursosExtra=[];
+let asigsExtra=[];
+
+// ── FIREBASE INIT ──
+document.addEventListener('fb-ready',()=>{
+  ({db,ref:fbRef,push:fbPush,onValue:fbOnValue,remove:fbRemove,set:fbSet,get:fbGet}=window._fb);
+  try{
+    const raw=localStorage.getItem('rp_session');
+    if(raw){
+      const saved=JSON.parse(raw);
+      if(saved&&saved.username) enterApp(saved);
+      else showLoginScreen();
+    } else showLoginScreen();
+  }catch{showLoginScreen();}
+});
+
+function showLoginScreen(){el('login-screen').style.display='flex';}
+
+// Mostrar campo curso en registro cuando rol=alumno
+el('reg-role').addEventListener('change',()=>{
+  el('curso-field').style.display=el('reg-role').value==='alumno'?'block':'none';
+});
+
+// ── NAVEGACIÓN LOGIN ──
+function showRegister(){
+  ['login-form','create-group-form','join-group-form','group-created-form'].forEach(id=>el(id).style.display='none');
+  el('register-form').style.display='block';
+  populateCursoSelect('reg-curso',[]);
+}
+function showLogin(){
+  ['register-form','create-group-form','join-group-form','group-created-form'].forEach(id=>el(id).style.display='none');
+  el('login-form').style.display='block';
+}
+function showCreateGroup(){
+  const ok=validateRegForm();if(!ok)return;
+  el('register-form').style.display='none';
+  el('create-group-form').style.display='block';
+}
+function showJoinGroup(){
+  const ok=validateRegForm();if(!ok)return;
+  el('register-form').style.display='none';
+  el('join-group-form').style.display='block';
+}
+function validateRegForm(){
+  const name=v('reg-name'),u=v('reg-user').toLowerCase(),p=v('reg-pass'),role=v('reg-role');
+  const err=el('reg-error');
+  if(!name||!u||p.length<4){err.textContent='Rellena todos los campos (contraseña mín. 4 caracteres)';err.classList.add('show');return false;}
+  err.classList.remove('show');
+  const curso=role==='alumno'?v('reg-curso'):'';
+  pendingRegisterData={name,username:u,password:p,role,curso};
+  return true;
+}
+
+function populateCursoSelect(selectId, extras){
+  const sel=el(selectId);
+  const todos=[...CURSOS_BASE,...extras];
+  const grupos={};
+  todos.forEach(c=>{if(!grupos[c.grupo])grupos[c.grupo]=[];grupos[c.grupo].push(c);});
+  let html='<option value="">— Selecciona curso —</option>';
+  Object.entries(grupos).forEach(([g,cs])=>{
+    html+=`<optgroup label="${g}">`;
+    cs.forEach(c=>html+=`<option value="${c.id}">${c.label}</option>`);
+    html+='</optgroup>';
+  });
+  sel.innerHTML=html;
+}
+
+function generateGroupCode(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code='';for(let i=0;i<6;i++)code+=chars[Math.floor(Math.random()*chars.length)];
+  return code;
+}
+
+async function doCreateGroup(){
+  if(!fbRef){toast('⏳ Cargando...');return;}
+  const groupName=v('group-name-input');
+  const err=el('create-group-error');
+  if(!groupName){err.textContent='Escribe un nombre para el grupo';err.classList.add('show');return;}
+  err.classList.remove('show');
+  const code=generateGroupCode();
+  try{
+    const snap=await fbGet(fbRef(db,'groups/'+code));
+    if(snap.exists()){doCreateGroup();return;}
+    await fbSet(fbRef(db,'groups/'+code),{name:groupName,code,createdBy:pendingRegisterData.username,createdAt:new Date().toISOString()});
+    pendingRegisterData.groupCode=code;
+    pendingRegisterData.groupName=groupName;
+    el('new-group-code-display').textContent=code;
+    el('create-group-form').style.display='none';
+    el('group-created-form').style.display='block';
+  }catch(e){toast('❌ Error: '+e.message);}
+}
+
+async function doJoinGroup(){
+  if(!fbRef){toast('⏳ Cargando...');return;}
+  const code=v('join-group-code').toUpperCase();
+  const err=el('join-group-error');
+  if(code.length<6){err.textContent='Introduce el código de 6 caracteres';err.classList.add('show');return;}
+  try{
+    const snap=await fbGet(fbRef(db,'groups/'+code));
+    if(!snap.exists()){err.textContent='Código incorrecto';err.classList.add('show');return;}
+    err.classList.remove('show');
+    pendingRegisterData.groupCode=code;
+    pendingRegisterData.groupName=snap.val().name;
+    await doFinalRegister();
+  }catch(e){toast('❌ Error: '+e.message);}
+}
+
+async function doFinalRegister(){
+  if(!fbRef||!pendingRegisterData){return;}
+  const {name,username:u,password:p,role,curso,groupCode,groupName}=pendingRegisterData;
+  try{
+    const snap=await fbGet(fbRef(db,'users/'+u));
+    if(snap.exists()){toast('❌ Ese usuario ya existe');return;}
+    const user={username:u,password:p,name,role,groupCode,groupName,curso:curso||''};
+    await fbSet(fbRef(db,'users/'+u),user);
+    enterApp(user);
+  }catch(e){toast('❌ Error: '+e.message);}
+}
+
+async function doLogin(){
+  if(!fbRef){toast('⏳ Cargando...');return;}
+  const u=v('login-user').toLowerCase(),p=v('login-pass');
+  if(!u||!p)return;
+  try{
+    const snap=await fbGet(fbRef(db,'users/'+u));
+    if(!snap.exists()||snap.val().password!==p){el('login-error').classList.add('show');return;}
+    el('login-error').classList.remove('show');
+    enterApp({...snap.val(),username:u});
+  }catch(e){toast('❌ Error de conexión.');}
+}
+
+async function enterApp(user){
+  currentUser=user;
+  if(currentUser.groupCode&&(!currentUser.groupName||currentUser.groupName==='undefined')){
+    try{
+      const snap=await fbGet(fbRef(db,'groups/'+currentUser.groupCode));
+      currentUser.groupName=snap.exists()?(snap.val().name||currentUser.groupCode):currentUser.groupCode;
+      await fbSet(fbRef(db,'users/'+currentUser.username+'/groupName'),currentUser.groupName);
+    }catch(e){currentUser.groupName=currentUser.groupCode;}
+  }
+  localStorage.setItem('rp_session',JSON.stringify({...currentUser,_savedAt:Date.now()}));
+  el('login-screen').classList.add('hidden');
+  el('app').classList.add('visible');
+  el('user-display-name').textContent=currentUser.name.split(' ')[0];
+  el('user-avatar').textContent=currentUser.name[0].toUpperCase();
+  const rt=el('role-tag');
+  rt.textContent=currentUser.role==='profesor'?'Profesor':'Alumno';
+  rt.className='role-tag '+currentUser.role;
+  el('group-name-display').textContent=currentUser.groupName||currentUser.groupCode||'—';
+  if(currentUser.role==='profesor')el('add-btn').style.display='flex';
+  await loadGroupExtras();
+  subscribeExams();
+  migrateOldData(); // corre en paralelo, no bloquea
+  subscribeNotifs();
+  askPushPermission();
+  listenForPush();
+}
+
+async function loadGroupExtras(){
+  cursosExtra=[];asigsExtra=[];
+  if(!currentUser.groupCode)return;
+  try{
+    const snap=await fbGet(fbRef(db,'groups/'+currentUser.groupCode));
+    if(!snap.exists()){
+      // El grupo no existe en /groups, lo creamos para que funcione
+      await fbSet(fbRef(db,'groups/'+currentUser.groupCode),{
+        name:currentUser.groupName||currentUser.groupCode,
+        code:currentUser.groupCode,
+        createdBy:currentUser.username,
+        createdAt:new Date().toISOString()
+      });
+      return;
+    }
+    const g=snap.val();
+    if(g.cursosExtra){
+      const v=Object.values(g.cursosExtra);
+      cursosExtra=v.filter(x=>x&&x.id&&x.label);
+    }
+    if(g.asigsExtra){
+      const v=Object.values(g.asigsExtra);
+      asigsExtra=v.filter(x=>typeof x==='string');
+    }
+  }catch(e){console.log('loadGroupExtras error:',e);}
+}
+
+function doLogout(){
+  localStorage.removeItem('rp_session');
+  if(unsubExams){unsubExams();unsubExams=null;}
+  if(unsubNotifs){unsubNotifs();unsubNotifs=null;}
+  currentUser=null;allExams=[];cursosExtra=[];asigsExtra=[];
+  el('login-screen').classList.remove('hidden');
+  el('login-screen').style.display='flex';
+  el('app').classList.remove('visible');
+  el('add-btn').style.display='none';
+  el('login-user').value='';el('login-pass').value='';
+  showLogin();
+}
+
+// ── EXAMS ──
+// ── MIGRACIÓN DE DATOS ANTIGUOS ──
+async function migrateOldData(){
+  if(currentUser.role!=='profesor')return;
+  try{
+    const snap=await fbGet(fbRef(db,'exams'));
+    if(!snap.exists())return;
+    const updates={};
+    snap.forEach(child=>{
+      const ex=child.val();
+      if(!ex||ex.groupCode!==currentUser.groupCode)return;
+      let changed=false;
+      const update={...ex};
+      // Añadir tipoCentro si falta
+      if(!update.tipoCentro){
+        update.tipoCentro='colegio';
+        changed=true;
+      }
+      // Añadir centro si falta
+      if(!update.centro){
+        update.centro='Sin especificar';
+        changed=true;
+      }
+      // Añadir cursoLabel si falta
+      if(!update.cursoLabel&&update.curso){
+        const info=CURSOS_BASE.find(c=>c.id===update.curso);
+        update.cursoLabel=info?info.label:update.curso;
+        changed=true;
+      }
+      // Renombrar materia→asignatura si existe
+      if(update.materia&&!update.asignatura){
+        update.asignatura=update.materia;
+        changed=true;
+      }
+      if(changed)updates[child.key]=update;
+    });
+    const keys=Object.keys(updates);
+    if(keys.length>0){
+      await Promise.all(keys.map(k=>fbSet(fbRef(db,'exams/'+k),updates[k])));
+      console.log('Migrados '+keys.length+' exámenes antiguos');
+    }
+  }catch(e){console.log('Error migrando:',e);}
+}
+
+function subscribeExams(){
+  if(unsubExams){unsubExams();unsubExams=null;}
+  unsubExams=fbOnValue(fbRef(db,'exams'),snap=>{
+    allExams=[];
+    el('exams-grid').innerHTML=''; // quita el spinner
+    if(snap&&snap.exists()){
+      snap.forEach(child=>{
+        const val=child.val();
+        if(!val||!val.titulo)return;
+        if(val.groupCode!==currentUser.groupCode)return;
+        // Alumno solo ve su curso
+        if(currentUser.role==='alumno'&&currentUser.curso&&val.curso&&val.curso!==currentUser.curso)return;
+        allExams.push({id:child.key,...val});
+      });
+    }
+    allExams.sort((a,b)=>(a.fecha||'9999-12-31')<(b.fecha||'9999-12-31')?-1:1);
+    buildFilters();
+    renderExams();
+  });
+}
+
+function makeChips(containerId, rowId, items, activeVal, onSelect, allLabel){
+  const row=el(rowId);
+  if(!items.length){row.style.display='none';return;}
+  row.style.display='flex';
+  const c=el(containerId);
+  c.innerHTML='';
+  const all=document.createElement('div');
+  all.className='filter-chip'+(activeVal==='todos'||activeVal==='todas'?' active':'');
+  all.textContent=allLabel;
+  all.onclick=()=>onSelect(allLabel==='Todos'?'todos':'todas');
+  c.appendChild(all);
+  items.forEach(item=>{
+    const chip=document.createElement('div');
+    chip.className='filter-chip'+(activeVal===item?' active':'');
+    chip.textContent=item;
+    chip.onclick=()=>onSelect(item);
+    c.appendChild(chip);
+  });
+}
+
+function buildFilters(){
+  if(currentUser.role!=='profesor')return;
+
+  // Filtro tipo (colegio/instituto)
+  const tipos=[...new Set(allExams.map(e=>e.tipoCentro).filter(Boolean))];
+  const tipoLabels=tipos.map(t=>t==='colegio'?'🏫 Colegio':'🎓 Instituto');
+  makeChips('tipo-filter-chips','tipo-filter-row',tipoLabels,
+    filtroTipo==='todos'?'todos':(filtroTipo==='colegio'?'🏫 Colegio':'🎓 Instituto'),
+    val=>{
+      if(val==='todos'){filtroTipo='todos';}
+      else{filtroTipo=val.includes('Colegio')?'colegio':'instituto';}
+      filtroCentro='todos';filtroCurso='todos';
+      buildFilters();renderExams();
+    },'Todos'
+  );
+
+  // Filtro centro (filtrado por tipo si hay uno activo)
+  const examsFiltradosTipo=filtroTipo==='todos'?allExams:allExams.filter(e=>e.tipoCentro===filtroTipo);
+  const centros=[...new Set(examsFiltradosTipo.map(e=>e.centro).filter(Boolean))];
+  makeChips('centro-filter-chips','centro-filter-row',centros,filtroCentro,
+    val=>{filtroCentro=val==='todos'?'todos':val;filtroCurso='todos';buildFilters();renderExams();},'Todos'
+  );
+
+  // Filtro curso
+  const examsFiltradosCentro=filtroCentro==='todos'?examsFiltradosTipo:examsFiltradosTipo.filter(e=>e.centro===filtroCentro);
+  const cursos=[...new Set(examsFiltradosCentro.map(e=>e.curso).filter(Boolean))];
+  const cursoLabels=cursos.map(cid=>{const info=CURSOS_BASE.find(c=>c.id===cid);return info?info.label:cid;});
+  makeChips('curso-filter-chips','curso-filter-row',cursoLabels,
+    filtroCurso==='todos'?'todos':(()=>{const info=CURSOS_BASE.find(c=>c.id===filtroCurso);return info?info.label:filtroCurso;})(),
+    val=>{
+      if(val==='todos'){filtroCurso='todos';}
+      else{const info=CURSOS_BASE.find(c=>c.label===val);filtroCurso=info?info.id:val;}
+      buildFilters();renderExams();
+    },'Todos'
+  );
+
+  // Filtro asignatura
+  const examsFiltradosCurso=filtroCurso==='todos'?examsFiltradosCentro:examsFiltradosCentro.filter(e=>e.curso===filtroCurso);
+  const asigs=[...new Set(examsFiltradosCurso.map(e=>e.asignatura).filter(Boolean))];
+  makeChips('asig-filter-chips','asig-filter-row',asigs,filtroAsig,
+    val=>{filtroAsig=val==='todas'?'todas':val;buildFilters();renderExams();},'Todas'
+  );
+}
+
+function isUpcoming(f){
+  if(!f)return false;
+  const today=new Date();
+  const day=today.getDay();
+  const diffToMonday=day===0?-6:1-day;
+  const nextMonday=new Date(today);
+  nextMonday.setDate(today.getDate()+diffToMonday+7);
+  nextMonday.setHours(0,0,0,0);
+  const examDate=new Date(f+'T00:00:00');
+  return examDate>=nextMonday;
+}
+function isThisWeek(f){
+  if(!f)return false;
+  const today=new Date();
+  const day=today.getDay(); // 0=dom, 1=lun...
+  const diffToMonday=day===0?-6:1-day;
+  const monday=new Date(today);
+  monday.setDate(today.getDate()+diffToMonday);
+  monday.setHours(0,0,0,0);
+  const sunday=new Date(monday);
+  sunday.setDate(monday.getDate()+6);
+  sunday.setHours(23,59,59,999);
+  const examDate=new Date(f+'T00:00:00');
+  return examDate>=monday&&examDate<=sunday;
+}
+function formatDate(f){if(!f)return'Sin fecha';return new Date(f+'T00:00:00').toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})}
+function daysUntil(f){
+  if(!f)return null;
+  const d=Math.ceil((new Date(f+'T00:00:00')-new Date())/864e5);
+  if(d<0)return'Hace '+(-d)+' día'+(-d!==1?'s':'');
+  if(d===0)return'¡HOY!';if(d===1)return'Mañana';return'En '+d+' días';
+}
+
+function setFilter(f,e,type){
+  if(type==='estado'){
+    filtroEstado=f;
+    el('filter-section').querySelectorAll('.filter-row:first-child .filter-chip').forEach(c=>c.classList.remove('active'));
+    e.classList.add('active');
+  }
+  renderExams();
+}
+
+function toggleFilters(){
+  const sec=el('filter-section');
+  const btn=el('filter-toggle-btn');
+  sec.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+
+function renderExams(){
+  let list=[...allExams];
+  if(filtroEstado==='proximos')list=list.filter(e=>isUpcoming(e.fecha));
+  if(filtroEstado==='pasados')list=list.filter(e=>!isUpcoming(e.fecha));
+  if(filtroEstado==='semana')list=list.filter(e=>isThisWeek(e.fecha));
+  if(filtroTipo!=='todos')list=list.filter(e=>e.tipoCentro===filtroTipo);
+  if(filtroCentro!=='todos')list=list.filter(e=>e.centro===filtroCentro);
+  if(filtroCurso!=='todos')list=list.filter(e=>e.curso===filtroCurso);
+  if(filtroAsig!=='todas')list=list.filter(e=>e.asignatura===filtroAsig);
+
+  el('stat-total').textContent=allExams.length;
+  el('stat-upcoming').textContent=allExams.filter(e=>e.fecha&&new Date(e.fecha+'T23:59:59')>=new Date()).length;
+  el('stat-week').textContent=allExams.filter(e=>isThisWeek(e.fecha)).length;
+
+  const grid=el('exams-grid');
+  if(!list.length){
+    grid.innerHTML='<div class="no-exams"><div class="icon">📚</div><h3>No hay exámenes aquí</h3><p>'+(currentUser.role==='profesor'?'Pulsa "Nuevo examen" para añadir uno.':'Cuando se publiquen exámenes, aparecerán aquí.')+'</p></div>';
+    return;
+  }
+
+  const COLORS=[['#e8c547','#0f0e17'],['#6bffb8','#0f0e17'],['#ff6b6b','white'],['#a78bfa','white'],['#38bdf8','#0f0e17'],['#fb923c','#0f0e17'],['#f472b6','white'],['#4ade80','#0f0e17']];
+  const ci=s=>Math.abs([...String(s)].reduce((a,c)=>a+c.charCodeAt(0),0))%8;
+  const todosLos=[...CURSOS_BASE,...cursosExtra];
+
+  grid.innerHTML=list.map((ex,i)=>{
+    const idx=ci(ex.asignatura||ex.titulo||'x');
+    const [bg,fg]=COLORS[idx];
+    const stripe=COLORS[idx][0];
+    const isNew=ex.createdAt&&(Date.now()-new Date(ex.createdAt).getTime())<86400000;
+    const up=isUpcoming(ex.fecha);
+    const days=daysUntil(ex.fecha);
+    const canDel=currentUser.role==='profesor'&&ex.autor===currentUser.username;
+    const cursoInfo=todosLos.find(c=>c.id===ex.curso);
+    const cursoLabel=cursoInfo?cursoInfo.label:(ex.curso||'');
+    return '<div class="exam-card '+(isNew?'new-card':'')+'" style="animation-delay:'+(i*.05)+'s">'+
+      '<div class="exam-stripe" style="background:'+stripe+'"></div>'+
+      '<div style="padding-left:8px">'+
+        '<div class="exam-top">'+
+          '<div class="exam-title">'+h(ex.titulo)+(isNew?' <span class="new-badge">Nuevo</span>':'')+'</div>'+
+          (ex.asignatura?'<div class="exam-badge" style="background:'+bg+';color:'+fg+'">'+h(ex.asignatura)+'</div>':'')+
+        '</div>'+
+        (ex.desc?'<div class="exam-desc">'+h(ex.desc)+'</div>':'')+
+        '<div class="exam-meta">'+
+          (ex.fecha?'<span class="meta-item">📅 '+formatDate(ex.fecha)+'</span>':'')+
+          (days?'<span class="meta-item"> '+(up?'⏳':'✅')+' '+days+'</span>':'')+
+          (ex.centro?'<span class="meta-tag">'+(ex.tipoCentro==='colegio'?'🏫':'🎓')+' '+h(ex.centro)+'</span>':'')+
+          (cursoLabel?'<span class="meta-tag">'+h(cursoLabel)+'</span>':'')+
+          '<span class="meta-item"> 👤 '+h(ex.autorNombre||ex.autor)+'</span>'+
+        '</div>'+
+        (canDel?'<div class="exam-actions"><button class="btn-sm" onclick="editExam(\''+ex.id+'\')" style="color:var(--accent);border-color:var(--accent)">✏️ Editar</button><button class="btn-sm danger" onclick="deleteExam(\''+ex.id+'\')" style="margin-left:4px">🗑 Eliminar</button></div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function deleteExam(id){
+  if(!confirm('¿Eliminar este examen?'))return;
+  await fbRemove(fbRef(db,'exams/'+id));
+  toast('🗑 Examen eliminado');
+}
+
+function updateEditCentros(){
+  const tipo=el('edit-tipo-centro').value;
+  const centros=CENTROS[tipo]||[];
+  const sel=el('edit-centro');
+  sel.innerHTML='';
+  centros.forEach(c=>{
+    const opt=document.createElement('option');
+    opt.value=c;opt.textContent=c;
+    sel.appendChild(opt);
+  });
+  // update cursos too
+  const cursos=CURSOS_POR_TIPO[tipo]||[];
+  const selC=el('edit-curso');
+  selC.innerHTML='';
+  cursos.forEach(c=>{
+    const opt=document.createElement('option');
+    opt.value=c.id;opt.textContent=c.label;
+    selC.appendChild(opt);
+  });
+}
+
+function editExam(id){
+  const ex=allExams.find(e=>e.id===id);
+  if(!ex)return;
+  el('edit-exam-id').value=id;
+  el('edit-title').value=ex.titulo||'';
+  el('edit-desc').value=ex.desc||'';
+
+  // Tipo centro
+  const tipo=ex.tipoCentro||'colegio';
+  el('edit-tipo-centro').value=tipo;
+
+  // Centros según tipo
+  const centros=CENTROS[tipo]||[];
+  const selCentro=el('edit-centro');
+  selCentro.innerHTML='';
+  centros.forEach(c=>{
+    const opt=document.createElement('option');
+    opt.value=c;opt.textContent=c;
+    if(c===ex.centro)opt.selected=true;
+    selCentro.appendChild(opt);
+  });
+
+  // Cursos según tipo
+  const cursos=CURSOS_POR_TIPO[tipo]||[];
+  const selCurso=el('edit-curso');
+  selCurso.innerHTML='';
+  cursos.forEach(c=>{
+    const opt=document.createElement('option');
+    opt.value=c.id;opt.textContent=c.label;
+    if(c.id===ex.curso)opt.selected=true;
+    selCurso.appendChild(opt);
+  });
+
+  // Asignaturas
+  const todas=[...ASIGS_BASE,...asigsExtra];
+  const selAsig=el('edit-asignatura');
+  selAsig.innerHTML='';
+  todas.forEach(a=>{
+    const opt=document.createElement('option');
+    opt.value=a;opt.textContent=a;
+    if(a===(ex.asignatura||ex.materia))opt.selected=true;
+    selAsig.appendChild(opt);
+  });
+
+  // Fecha mínima hoy
+  const today=new Date().toISOString().split('T')[0];
+  el('edit-fecha').min=today;
+  el('edit-fecha').value=ex.fecha||'';
+
+  el('edit-modal').classList.add('show');
+}
+
+function closeEditModal(){el('edit-modal').classList.remove('show');}
+el('edit-modal').addEventListener('click',e=>{if(e.target===el('edit-modal'))closeEditModal();});
+
+async function saveEditExam(){
+  const id=el('edit-exam-id').value;
+  const ex=allExams.find(e=>e.id===id);
+  if(!ex)return;
+  const titulo=el('edit-title').value.trim();
+  if(!titulo){toast('⚠️ El título no puede estar vacío');return;}
+  const fecha=el('edit-fecha').value;
+  if(!fecha){toast('⚠️ Selecciona una fecha');return;}
+  const today=new Date().toISOString().split('T')[0];
+  if(fecha<today){toast('⚠️ La fecha no puede ser anterior a hoy');return;}
+  const cursoId=el('edit-curso').value;
+  const cursoInfo=CURSOS_BASE.find(c=>c.id===cursoId);
+  const updated={
+    ...ex,
+    titulo,
+    tipoCentro:el('edit-tipo-centro').value,
+    centro:el('edit-centro').value,
+    curso:cursoId,
+    cursoLabel:cursoInfo?cursoInfo.label:cursoId,
+    asignatura:el('edit-asignatura').value,
+    fecha,
+    desc:el('edit-desc').value.trim(),
+  };
+  try{
+    await fbSet(fbRef(db,'exams/'+id),updated);
+    closeEditModal();
+    toast('✅ Examen actualizado');
+  }catch(e){toast('❌ Error: '+e.message);}
+}
+
+// ── NOTIFICACIONES EN APP ──
+function subscribeNotifs(){
+  if(unsubNotifs){unsubNotifs();unsubNotifs=null;}
+  unsubNotifs=fbOnValue(fbRef(db,'notifs/'+currentUser.username),snap=>{
+    let count=0;
+    if(snap&&snap.exists())snap.forEach(c=>{if(c.val()&&!c.val().read)count++;});
+    const badge=el('notif-badge');
+    if(count>0){badge.textContent=count>9?'9+':count;badge.classList.add('show');}
+    else badge.classList.remove('show');
+  });
+}
+
+function toggleNotifs(){
+  el('notif-panel').classList.toggle('show');
+  if(el('notif-panel').classList.contains('show'))renderNotifPanel();
+}
+
+async function renderNotifPanel(){
+  const snap=await fbGet(fbRef(db,'notifs/'+currentUser.username));
+  const items=[];
+  if(snap&&snap.exists())snap.forEach(c=>{if(c.val())items.push({id:c.key,...c.val()})});
+  items.sort((a,b)=>b.ts>a.ts?1:-1);
+  const list=el('notif-list');
+  if(!items.length){list.innerHTML='<div class="notif-empty">Sin notificaciones 🎉</div>';return;}
+  list.innerHTML=items.map(n=>'<div class="notif-item '+(n.read?'':'unread')+'">'+(!n.read?'<div class="notif-dot"></div>':'<div style="width:7px;flex-shrink:0"></div>')+'<div><div class="notif-item-title">'+h(n.title)+'</div><div class="notif-item-sub">'+h(n.sub)+'</div></div></div>').join('');
+  items.forEach(n=>{if(!n.read)fbSet(fbRef(db,'notifs/'+currentUser.username+'/'+n.id+'/read'),true);});
+}
+
+async function clearMyNotifs(){
+  await fbRemove(fbRef(db,'notifs/'+currentUser.username));
+  el('notif-list').innerHTML='<div class="notif-empty">Sin notificaciones 🎉</div>';
+  el('notif-badge').classList.remove('show');
+}
+
+document.addEventListener('click',e=>{
+  if(!el('notif-panel').contains(e.target)&&!el('notif-btn').contains(e.target))
+    el('notif-panel').classList.remove('show');
+});
+
+// ── FORMULARIO PASO A PASO ──
+let currentStep=1;
+const TOTAL_STEPS=7;
+let examData={tipoCentro:'',centro:'',curso:'',asignatura:'',titulo:'',fecha:'',desc:''};
+
+function openModal(){
+  currentStep=1;
+  examData={curso:'',asignatura:'',titulo:'',fecha:'',desc:''};
+  renderStep();
+  el('modal').classList.add('show');
+}
+function closeModal(){el('modal').classList.remove('show');}
+el('modal').addEventListener('click',e=>{if(e.target===el('modal'))closeModal();});
+
+function renderStep(){
+  for(let i=1;i<=TOTAL_STEPS;i++)el('step-'+i).style.display=i===currentStep?'block':'none';
+  el('modal-step-subtitle').textContent='Paso '+currentStep+' de '+TOTAL_STEPS;
+  el('btn-back').style.display=currentStep>1?'inline-block':'none';
+  el('btn-next').textContent=currentStep===TOTAL_STEPS?'🚀 Publicar':'Siguiente →';
+
+  // Indicador de pasos
+  const ind=el('step-indicator');
+  ind.innerHTML='';
+  const labels=['Tipo','Centro','Curso','Asignatura','Título','Detalles','Publicar'];
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    const d=document.createElement('div');
+    d.className='step-dot'+(i<currentStep?' done':i===currentStep?' active':'');
+    ind.appendChild(d);
+  }
+  const lbl=document.createElement('span');
+  lbl.className='step-title';lbl.textContent=labels[currentStep-1];
+  ind.appendChild(lbl);
+
+  if(currentStep===1) renderTipoOptions();
+  if(currentStep===2) renderCentroOptions();
+  if(currentStep===3) renderCursoOptions();
+  if(currentStep===4) renderAsigOptions();
+  if(currentStep===7) renderSummary();
+}
+
+function renderTipoOptions(){
+  const container=el('tipo-options');
+  container.innerHTML='';
+  [{id:'colegio',icon:'🏫',label:'Colegio',sub:'Educación Primaria'},{id:'instituto',icon:'🎓',label:'Instituto',sub:'ESO, Bachillerato, FP'}].forEach(t=>{
+    const div=document.createElement('div');
+    div.className='option-btn'+(examData.tipoCentro===t.id?' selected':'');
+    div.innerHTML='<div class="opt-icon">'+t.icon+'</div><div class="opt-label">'+t.label+'</div><div class="opt-sub">'+t.sub+'</div>';
+    div.onclick=()=>{examData.tipoCentro=t.id;examData.centro='';examData.curso='';renderTipoOptions();};
+    container.appendChild(div);
+  });
+}
+
+function renderCentroOptions(){
+  const lista=CENTROS[examData.tipoCentro]||[];
+  const container=el('centro-options');
+  container.innerHTML='';
+  lista.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='option-item'+(examData.centro===c?' selected':'');
+    div.innerHTML='<div class="option-item-label">'+c+'</div><span class="check-icon">✓</span>';
+    div.onclick=()=>{examData.centro=c;renderCentroOptions();};
+    container.appendChild(div);
+  });
+}
+
+function renderCursoOptions(){
+  const todos=getCursoBase();
+  const container=el('curso-options');
+  container.innerHTML='';
+  todos.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='option-item'+(examData.curso===c.id?' selected':'');
+    div.innerHTML='<div><div class="option-item-label">'+c.label+'</div><div class="option-item-sub">'+c.grupo+'</div></div><span class="check-icon">✓</span>';
+    div.onclick=()=>{examData.curso=c.id;renderCursoOptions();};
+    container.appendChild(div);
+  });
+}
+
+function renderAsigOptions(){
+  const todas=[...ASIGS_BASE,...asigsExtra];
+  const container=el('asig-options');
+  container.innerHTML='';
+  todas.forEach(a=>{
+    const div=document.createElement('div');
+    div.className='option-item'+(examData.asignatura===a?' selected':'');
+    div.innerHTML='<div class="option-item-label">'+a+'</div><span class="check-icon">✓</span>';
+    div.onclick=()=>{examData.asignatura=a;renderAsigOptions();};
+    container.appendChild(div);
+  });
+}
+
+function renderSummary(){
+  const todosLos=[...CURSOS_BASE,...cursosExtra];
+  const cursoInfo=todosLos.find(c=>c.id===examData.curso);
+  el('exam-summary').innerHTML=[
+    ['Tipo',examData.tipoCentro==='colegio'?'🏫 Colegio':'🎓 Instituto'],
+    ['Centro',examData.centro],
+    ['Curso',cursoInfo?cursoInfo.label:examData.curso],
+    ['Asignatura',examData.asignatura],
+    ['Título',examData.titulo],
+    ['Fecha',examData.fecha?formatDate(examData.fecha):'Sin fecha'],
+    ['Descripción',examData.desc||'—'],
+  ].map(([k,v])=>'<div class="summary-row"><span class="summary-key">'+k+'</span><span class="summary-val">'+h(v)+'</span></div>').join('');
+}
+
+async function stepNext(){
+  // Validar paso actual
+  if(currentStep===1){
+    if(!examData.tipoCentro){toast('⚠️ Selecciona colegio o instituto');return;}
+  }
+  if(currentStep===2){
+    // Añadir centro personalizado si hay texto
+    const nc=el('nuevo-centro-input').value.trim();
+    if(nc&&!examData.centro){examData.centro=nc;}
+    if(!examData.centro){toast('⚠️ Selecciona un centro');return;}
+  }
+  if(currentStep===3){
+    const nc=el('nuevo-curso-input').value.trim();
+    if(nc&&!examData.curso){
+      const id='custom_'+Date.now();
+      const nuevo={id,label:nc,grupo:'Personalizados'};
+      cursosExtra.push(nuevo);
+      examData.curso=id;
+      await fbSet(fbRef(db,'groups/'+currentUser.groupCode+'/cursosExtra/'+id),nuevo);
+      el('nuevo-curso-input').value='';
+    }
+    if(!examData.curso){toast('⚠️ Selecciona un curso');return;}
+  }
+  if(currentStep===4){
+    const na=el('nueva-asig-input').value.trim();
+    if(na&&!examData.asignatura){
+      asigsExtra.push(na);
+      examData.asignatura=na;
+      await fbPush(fbRef(db,'groups/'+currentUser.groupCode+'/asigsExtra'),na);
+      el('nueva-asig-input').value='';
+    }
+    if(!examData.asignatura){toast('⚠️ Selecciona una asignatura');return;}
+  }
+  if(currentStep===5){
+    examData.titulo=v('ex-title');
+    examData.fecha=el('ex-fecha').value;
+    if(!examData.titulo){toast('⚠️ Escribe un título');return;}
+  }
+  if(currentStep===6){
+    examData.desc=v('ex-desc');
+  }
+  if(currentStep===TOTAL_STEPS){
+    await publishExam();
+    return;
+  }
+  currentStep++;
+  renderStep();
+}
+
+function stepBack(){
+  if(currentStep>1){currentStep--;renderStep();}
+}
+
+async function publishExam(){
+  const todosLos=[...CURSOS_BASE,...cursosExtra];
+  const cursoInfo=todosLos.find(c=>c.id===examData.curso);
+  const exam={
+    titulo:examData.titulo,
+    asignatura:examData.asignatura,
+    tipoCentro:examData.tipoCentro,
+    centro:examData.centro,
+    curso:examData.curso,
+    cursoLabel:cursoInfo?cursoInfo.label:examData.curso,
+    fecha:examData.fecha,
+    desc:examData.desc,
+    autor:currentUser.username,
+    autorNombre:currentUser.name,
+    groupCode:currentUser.groupCode,
+    createdAt:new Date().toISOString()
+  };
+  try{
+    await fbPush(fbRef(db,'exams'),exam);
+    // Notificaciones internas solo a alumnos del mismo curso
+    const usersSnap=await fbGet(fbRef(db,'users'));
+    if(usersSnap.exists()){
+      usersSnap.forEach(u=>{
+        if(u.key===currentUser.username)return;
+        const ud=u.val();
+        if(ud.groupCode!==currentUser.groupCode)return;
+        if(ud.role==='alumno'&&ud.curso&&ud.curso!==examData.curso)return;
+        fbPush(fbRef(db,'notifs/'+u.key),{
+          title:'📚 '+examData.asignatura+': '+examData.titulo,
+          sub:(cursoInfo?cursoInfo.label:examData.curso)+' · '+(examData.fecha?formatDate(examData.fecha):'Sin fecha')+' · '+currentUser.name,
+          read:false,ts:new Date().toISOString()
+        });
+      });
+    }
+    await fbSet(fbRef(db,'last_push'),{
+      title:'📚 '+examData.asignatura+': '+examData.titulo,
+      body:(cursoInfo?cursoInfo.label:examData.curso)+' · Por '+currentUser.name,
+      autor:currentUser.username,
+      curso:examData.curso,
+      groupCode:currentUser.groupCode,
+      ts:Date.now()
+    });
+    closeModal();
+    toast('🚀 Examen publicado. Notificaciones enviadas.');
+  }catch(e){toast('❌ Error: '+e.message);}
+}
+
+// ── PUSH NOTIFICATIONS ──
+const SERVER_URL='https://repasopro-server.onrender.com';
+
+async function askPushPermission(){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window))return;
+  try{
+    const reg=await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted')return;
+    const r=await fetch(SERVER_URL+'/vapid-public-key');
+    const {key}=await r.json();
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(key)});
+    await fetch(SERVER_URL+'/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:currentUser.username,subscription:sub,groupCode:currentUser.groupCode})});
+  }catch(e){console.log('Push setup error:',e);}
+}
+
+function urlBase64ToUint8Array(b){
+  const p='='.repeat((4-b.length%4)%4);
+  const d=(b+p).replace(/-/g,'+').replace(/_/g,'/');
+  const r=window.atob(d);const o=new Uint8Array(r.length);
+  for(let i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o;
+}
+
+let lastPushTs=parseInt(localStorage.getItem('rp_last_push_ts')||'0');
+function listenForPush(){
+  fbOnValue(fbRef(db,'last_push'),snap=>{
+    if(!snap||!snap.exists())return;
+    const data=snap.val();
+    if(!data||!data.ts)return;
+    if(data.ts>lastPushTs){lastPushTs=data.ts;localStorage.setItem('rp_last_push_ts',String(data.ts));}
+  });
+}
+
+// ── PERFIL ──
+function openProfile(){
+  el('profile-name').value=currentUser.name;
+  el('profile-pass').value='';el('profile-pass2').value='';
+  el('profile-error').classList.remove('show');
+  el('profile-avatar-big').textContent=currentUser.name[0].toUpperCase();
+  el('profile-name-display').textContent=currentUser.name;
+  el('profile-user-display').textContent='@'+currentUser.username;
+  const rd=el('profile-role-display');
+  rd.textContent=currentUser.role==='profesor'?'👩‍🏫 Profesor':'👨‍🎓 Alumno';
+  rd.style.color=currentUser.role==='profesor'?'var(--accent)':'var(--accent3)';
+  el('profile-group-display').textContent='Grupo: '+(currentUser.groupName||currentUser.groupCode||'—');
+  if(currentUser.role==='alumno'){
+    el('profile-curso-field').style.display='block';
+    const todosLos=[...CURSOS_BASE,...cursosExtra];
+    populateCursoSelect('profile-curso',cursosExtra);
+    el('profile-curso').value=currentUser.curso||'';
+  }
+  el('profile-modal').classList.add('show');
+}
+function closeProfile(){el('profile-modal').classList.remove('show');}
+el('profile-modal').addEventListener('click',e=>{if(e.target===el('profile-modal'))closeProfile();});
+
+async function saveProfile(){
+  const newName=v('profile-name'),newPass=el('profile-pass').value,newPass2=el('profile-pass2').value;
+  const err=el('profile-error');
+  if(!newName){err.textContent='El nombre no puede estar vacío';err.classList.add('show');return;}
+  if(newPass&&newPass.length<4){err.textContent='Contraseña mínimo 4 caracteres';err.classList.add('show');return;}
+  if(newPass&&newPass!==newPass2){err.textContent='Las contraseñas no coinciden';err.classList.add('show');return;}
+  err.classList.remove('show');
+  try{
+    await fbSet(fbRef(db,'users/'+currentUser.username+'/name'),newName);
+    if(newPass)await fbSet(fbRef(db,'users/'+currentUser.username+'/password'),newPass);
+    if(currentUser.role==='alumno'){
+      const nuevoCurso=v('profile-curso');
+      await fbSet(fbRef(db,'users/'+currentUser.username+'/curso'),nuevoCurso);
+      currentUser.curso=nuevoCurso;
+    }
+    currentUser={...currentUser,name:newName};
+    if(newPass)currentUser.password=newPass;
+    localStorage.setItem('rp_session',JSON.stringify({...currentUser,_savedAt:Date.now()}));
+    el('user-display-name').textContent=currentUser.name.split(' ')[0];
+    el('user-avatar').textContent=currentUser.name[0].toUpperCase();
+    closeProfile();
+    toast('✅ Perfil actualizado');
+  }catch(e){toast('❌ Error: '+e.message);}
+}
+
+// ── TOAST ──
+function toast(msg,dur=3500){
+  const c=el('toast-container'),d=document.createElement('div');
+  d.className='toast';d.textContent=msg;c.appendChild(d);
+  setTimeout(()=>d.remove(),dur);
+}
+
+el('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
