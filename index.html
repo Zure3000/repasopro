@@ -359,8 +359,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
   <!-- PASO 5: Título -->
   <div id="step-5" style="display:none">
-    <div style="font-weight:600;margin-bottom:14px">¿Cómo se llama el examen?</div>
-    <div class="field-group"><input type="text" id="ex-title" placeholder="Ej: Parcial Tema 3, Examen final..."></div>
+    <div style="font-weight:600;margin-bottom:14px">¿De quién es el examen?</div>
+    <div class="field-group"><label>Nombre del alumno</label><div style="display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;"><span style="padding:13px 0 13px 15px;color:var(--text-muted);font-size:.95rem;white-space:nowrap;font-weight:600">Examen: </span><input type="text" id="ex-title" placeholder="Nombre del alumno..." style="flex:1;background:transparent;border:none;padding:13px 15px 13px 4px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.95rem;outline:none;"></div></div>
     <div class="field-group"><label>Fecha del examen</label><input type="date" id="ex-fecha"></div>
   </div>
 
@@ -422,7 +422,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </select>
   </div>
   <div class="field-group"><label>Centro</label>
-    <select id="edit-centro"></select>
+    <select id="edit-centro" onchange="updateEditCursos()"></select>
   </div>
   <div class="field-group"><label>Curso</label>
     <select id="edit-curso"></select>
@@ -452,11 +452,11 @@ const CENTROS={
   colegio:[
     'Consolación','Francesc Roca i Alcaide','Illes Columbretes',
     'Josep Iturbi','Novenes de Calatrava','Pare Vilallonga',
-    'Penyagolosa','Salesianos San Juan Bautista','Villa Fátima'
+    'Penyagolosa','Salesianos','Villa Fátima'
   ],
   instituto:[
-    'IES Jaume I','IES Llombai','Consolación (ESO/Bach)',
-    'Illes Columbretes (ESO)','Salesianos (ESO/Bach)','Villa Fátima (ESO)'
+    'IES Jaume I','IES Llombai','Illes Columbretes',
+    'Salesianos','Villa Fátima'
   ]
 };
 
@@ -481,11 +481,6 @@ const CURSOS_POR_TIPO={
     {id:'fp3',label:'FP Grado Superior',grupo:'FP'},
   ]
 };
-
-function getCursoBase(){
-  const tipo=examData.tipoCentro||'colegio';
-  return[...(CURSOS_POR_TIPO[tipo]||[]),...cursosExtra];
-}
 
 const CURSOS_BASE=[
   ...CURSOS_POR_TIPO.colegio,...CURSOS_POR_TIPO.instituto
@@ -940,8 +935,13 @@ function updateEditCentros(){
     opt.value=c;opt.textContent=c;
     sel.appendChild(opt);
   });
-  // update cursos too
-  const cursos=CURSOS_POR_TIPO[tipo]||[];
+  updateEditCursos();
+}
+
+function updateEditCursos(){
+  const tipo=el('edit-tipo-centro').value;
+  const centro=el('edit-centro').value;
+  const cursos=getCursosPorCentro(tipo,centro);
   const selC=el('edit-curso');
   selC.innerHTML='';
   cursos.forEach(c=>{
@@ -973,8 +973,8 @@ function editExam(id){
     selCentro.appendChild(opt);
   });
 
-  // Cursos según tipo
-  const cursos=CURSOS_POR_TIPO[tipo]||[];
+  // Cursos según tipo y centro
+  const cursos=getCursosPorCentro(tipo, ex.centro||'');
   const selCurso=el('edit-curso');
   selCurso.innerHTML='';
   cursos.forEach(c=>{
@@ -1127,6 +1127,19 @@ function renderTipoOptions(){
   });
 }
 
+// Cursos restringidos por centro
+const CURSOS_RESTRINGIDOS={
+  'Consolación':['1eso','2eso','3eso','4eso'], // solo ESO
+};
+
+function getCursosPorCentro(tipo, centro){
+  if(CURSOS_RESTRINGIDOS[centro]){
+    const ids=CURSOS_RESTRINGIDOS[centro];
+    return CURSOS_BASE.filter(c=>ids.includes(c.id));
+  }
+  return [...(CURSOS_POR_TIPO[tipo]||[]),...cursosExtra];
+}
+
 function renderCentroOptions(){
   const lista=CENTROS[examData.tipoCentro]||[];
   const container=el('centro-options');
@@ -1135,13 +1148,13 @@ function renderCentroOptions(){
     const div=document.createElement('div');
     div.className='option-item'+(examData.centro===c?' selected':'');
     div.innerHTML='<div class="option-item-label">'+c+'</div><span class="check-icon">✓</span>';
-    div.onclick=()=>{examData.centro=c;renderCentroOptions();};
+    div.onclick=()=>{examData.centro=c;examData.curso='';renderCentroOptions();};
     container.appendChild(div);
   });
 }
 
 function renderCursoOptions(){
-  const todos=getCursoBase();
+  const todos=getCursosPorCentro(examData.tipoCentro, examData.centro);
   const container=el('curso-options');
   container.innerHTML='';
   todos.forEach(c=>{
@@ -1214,9 +1227,10 @@ async function stepNext(){
     if(!examData.asignatura){toast('⚠️ Selecciona una asignatura');return;}
   }
   if(currentStep===5){
-    examData.titulo=v('ex-title');
+    const rawTitle=v('ex-title');
+    if(!rawTitle){toast('⚠️ Escribe el nombre del alumno');return;}
+    examData.titulo='Examen: '+rawTitle;
     examData.fecha=el('ex-fecha').value;
-    if(!examData.titulo){toast('⚠️ Escribe un título');return;}
   }
   if(currentStep===6){
     examData.desc=v('ex-desc');
